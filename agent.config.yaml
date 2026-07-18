@@ -1,0 +1,11 @@
+workspace: ./workspace/ecommerce-api
+
+permissions:
+  read:
+    deny: [".env", ".env.*", "**/*.pem", "**/*.key", "secrets/**", "credentials.json"]
+  write:
+    deny: [".env", ".env.*", ".github/**", "package-lock.json", "**/*.lock"]
+
+commands:
+  deny: ["rm -rf", "rm -r /", "git push", "git push --force", "sudo", "chmod 777", "shutdown", "reboot"]
+  require_approval: ["npm install", "npm uninstall", "npm ci", "git commit", "git add"]

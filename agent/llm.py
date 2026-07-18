@@ -1,0 +1,23 @@
+"""Cliente LLM compartido, envuelto con Langfuse para observabilidad.
+
+`langfuse.openai.OpenAI` es un reemplazo directo (drop-in) del cliente de
+OpenAI: intercepta cada `chat.completions.create` / `embeddings.create` y
+registra prompt, modelo, tokens, latencia y costo estimado sin tener que
+instrumentar cada call site a mano.
+"""
+
+import os
+
+from langfuse.openai import OpenAI
+
+MODEL = os.environ.get("AGENT_MODEL", "gpt-5-nano")
+EMBEDDING_MODEL = "text-embedding-3-small"
+
+_client: OpenAI | None = None
+
+
+def get_client() -> OpenAI:
+    global _client
+    if _client is None:
+        _client = OpenAI(api_key=os.environ["OPENAI_API_KEY"])
+    return _client

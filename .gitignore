@@ -1,0 +1,12 @@
+.env
+venv/
+__pycache__/
+*.pyc
+rag_sources/chroma_db/
+memory_store/*.json
+memory_store/*/
+!memory_store/.gitkeep
+workspace/*/node_modules/
+workspace/*/dist/
+.claude/settings.local.json
+.idea/
