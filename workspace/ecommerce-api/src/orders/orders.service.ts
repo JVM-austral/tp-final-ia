@@ -1,4 +1,8 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  BadRequestException,
+} from '@nestjs/common';
 import { Order, OrderStatus } from './entities/order.entity';
 import { CreateOrderDto } from './dto/create-order.dto';
 import { UpdateOrderDto } from './dto/update-order.dto';
@@ -31,6 +35,15 @@ export class OrdersService {
   update(id: number, updateOrderDto: UpdateOrderDto): Order {
     const order = this.findOne(id);
     Object.assign(order, updateOrderDto);
+    return order;
+  }
+
+  ship(id: number): Order {
+    const order = this.findOne(id);
+    if (order.status === OrderStatus.SHIPPED) {
+      throw new BadRequestException(`Order #${id} is already shipped`);
+    }
+    order.status = OrderStatus.SHIPPED;
     return order;
   }
 

@@ -11,6 +11,13 @@ if sys.stdout.encoding is None or sys.stdout.encoding.lower() != "utf-8":
     sys.stdout.reconfigure(encoding="utf-8")
     sys.stderr.reconfigure(encoding="utf-8")
 
+# Cuando stdout no es una terminal (ej. redirigido a un archivo, o piped),
+# Python lo bufferea por bloque en vez de por línea: los prints quedan
+# retenidos y no aparecen hasta que el buffer se llena o el proceso
+# termina. Forzamos line buffering para que el progreso sea visible en
+# tiempo real siempre, no solo en una terminal interactiva.
+sys.stdout.reconfigure(line_buffering=True)
+
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -56,10 +63,9 @@ def run_chat() -> None:
 
     orch = Orchestrator(workspace=str(cfg.workspace), plan_mode=False, supervision=False)
 
-    from agent.memory import format_memory_for_prompt
+    from agent.memory import format_memory_summary_for_console
 
-    print("Memoria persistente cargada para este proyecto:")
-    print(format_memory_for_prompt(orch.memory))
+    print("Memoria persistente: " + format_memory_summary_for_console(orch.memory))
 
     print_status(orch)
 

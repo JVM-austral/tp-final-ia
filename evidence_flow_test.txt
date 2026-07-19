@@ -1,0 +1,83 @@
+============================================================
+Coding Agent Avanzado - TP Final (NestJS)
+Workspace: C:\Users\Vito\Programming\faculty\TpFinalInteligenciaArtificial\workspace\ecommerce-api
+============================================================
+Escribi tu tarea o /help para ver los comandos.
+
+Memoria persistente: (sin memoria previa para este proyecto)
+
+Plan mode: OFF   Supervision: OFF   Iteraciones totales: 0
+
+Vos: 
+[Iteración 1 de este turno, total acumulado: 1]
+
+  [orchestrator] list_files
+
+[Iteración 2 de este turno, total acumulado: 3]
+
+  [orchestrator] list_files
+
+[Iteración 3 de este turno, total acumulado: 5]
+
+  [orchestrator] list_files
+
+[Iteración 4 de este turno, total acumulado: 7]
+
+  [orchestrator] read_file
+
+[Iteración 5 de este turno, total acumulado: 9]
+
+  [orchestrator] read_file
+
+[Iteración 6 de este turno, total acumulado: 11]
+
+  [orchestrator] read_file
+
+[Iteración 7 de este turno, total acumulado: 13]
+
+  [orchestrator] read_file
+
+[Iteración 8 de este turno, total acumulado: 15]
+
+  [orchestrator] read_file
+
+[Iteración 9 de este turno, total acumulado: 17]
+
+  [orchestrator] read_file
+
+[Iteración 10 de este turno, total acumulado: 19]
+
+Agente:
+Resumen breve (basado en los archivos del repo):
+
+Qué es
+- El módulo Products (src/products) expone la API REST para manejar productos en la aplicación. Está declarado en src/products/products.module.ts y registra ProductsController y ProductsService.
+
+Rutas / endpoints (controller: src/products/products.controller.ts)
+- POST /products — crea un producto (recibe CreateProductDto).
+- GET /products — lista todos los productos.
+- GET /products/:id — obtiene un producto por id (usa ParseIntPipe).
+- PATCH /products/:id — actualiza campos de un producto (recibe UpdateProductDto).
+- DELETE /products/:id — elimina un producto.
+
+Lógica y almacenamiento (service: src/products/products.service.ts)
+- Storage en memoria: private products: Product[] y private nextId = 1 — NO usa base de datos, los datos no son persistentes entre ejecuciones.
+- create: construye Product con id autoincremental y lo guarda en el array.
+- findAll: devuelve el array completo.
+- findOne: busca por id y lanza NotFoundException si no existe.
+- update: obtiene el producto con findOne y aplica Object.assign con los campos recibidos.
+- remove: borra el producto del array.
+
+Modelo y validaciones (entities y DTOs)
+- Product (src/products/entities/product.entity.ts): id, name, description?, price, stock.
+- CreateProductDto (src/products/dto/create-product.dto.ts): name (string, obligatorio), description (string, opcional), price (número, positivo), stock (número, >= 0).
+- UpdateProductDto extiende PartialType(CreateProductDto) → todos los campos opcionales para PATCH.
+
+Observaciones / implicancias
+- Al ser almacenamiento en memoria, es útil para desarrollo o pruebas rápidas pero no apto para producción.
+- Las validaciones están definidas con class-validator en CreateProductDto; UpdateProductDto reutiliza esas reglas pero como opcionales.
+
+Fuente: análisis directo de los archivos en src/products del repositorio. ¿Querés que añada persistencia (por ejemplo TypeORM/Mongo) o escriba tests para este módulo?
+
+
+Vos: Hasta luego!

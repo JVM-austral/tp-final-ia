@@ -8,5 +8,6 @@ memory_store/*/
 !memory_store/.gitkeep
 workspace/*/node_modules/
 workspace/*/dist/
+*.bak
 .claude/settings.local.json
 .idea/

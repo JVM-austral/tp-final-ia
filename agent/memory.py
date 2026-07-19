@@ -105,3 +105,16 @@ def format_memory_for_prompt(memory: dict, max_summaries: int = 3) -> str:
     if not lines:
         return "(sin memoria previa para este proyecto)"
     return "\n".join(lines)
+
+
+def format_memory_summary_for_console(memory: dict, max_len: int = 160) -> str:
+    """Resumen de una línea para mostrar en consola al arrancar (el
+    resumen completo, más largo, es el que se inyecta en el system prompt
+    vía format_memory_for_prompt)."""
+    sessions = memory.get("session_summaries", [])
+    if not sessions:
+        return "(sin memoria previa para este proyecto)"
+    last = sessions[-1]
+    last_summary = last["summary"][:max_len] + ("..." if len(last["summary"]) > max_len else "")
+    label = "sesión previa registrada" if len(sessions) == 1 else "sesiones previas registradas"
+    return f"{len(sessions)} {label}. Última: {last_summary}"
