@@ -13,10 +13,11 @@ import json
 from dataclasses import dataclass
 
 from ..config import validate_tool_call
-from ..context import LOOP_WARNING_MESSAGE, MAX_LOOP_WARNINGS, LoopDetector
+from ..context import LOOP_WARNING_MESSAGE, MAX_LOOP_WARNINGS, LoopDetector, compact_history
 from ..llm import MODEL, get_client
 from ..observability import log_tool_call, observe_agent
 from ..state import TaskState
+from ..tools.registry import DESTRUCTIVE_TOOLS, filter_known_args
 
 MAX_SUBAGENT_ITERATIONS = 25
 
@@ -74,15 +75,35 @@ def _submit_result_tool() -> dict:
     }
 
 
-def run_subagent(spec: SubagentSpec, task_state: TaskState, instruction: str, on_tool_call=None) -> dict:
+def run_subagent(
+    spec: SubagentSpec,
+    task_state: TaskState,
+    instruction: str,
+    on_tool_call=None,
+    supervision: bool = False,
+    ask_permission=None,
+) -> dict:
     """Corre el loop de tool-calling de un subagente y devuelve su
-    resultado estructurado (también queda registrado en task_state)."""
+    resultado estructurado (también queda registrado en task_state).
+
+    `supervision` y `ask_permission` vienen del agente principal: en modo
+    supervisión, cualquier tool destructiva (write_file, run_command) que
+    ejecute ESTE subagente también pide confirmación, no solo las que
+    ejecuta el agente principal directamente.
+    """
     return observe_agent(name=f"subagent:{spec.name}", as_type="agent")(_run_subagent_impl)(
-        spec, task_state, instruction, on_tool_call
+        spec, task_state, instruction, on_tool_call, supervision, ask_permission
     )
 
 
-def _run_subagent_impl(spec: SubagentSpec, task_state: TaskState, instruction: str, on_tool_call=None) -> dict:
+def _run_subagent_impl(
+    spec: SubagentSpec,
+    task_state: TaskState,
+    instruction: str,
+    on_tool_call=None,
+    supervision: bool = False,
+    ask_permission=None,
+) -> dict:
     client = get_client()
     tools = spec.tools_schema + [_submit_result_tool()]
 
@@ -108,6 +129,8 @@ def _run_subagent_impl(spec: SubagentSpec, task_state: TaskState, instruction: s
                     ),
                 }
             )
+        messages = compact_history(client, MODEL, messages)
+
         response = client.chat.completions.create(
             model=MODEL,
             messages=messages,
@@ -161,15 +184,20 @@ def _run_subagent_impl(spec: SubagentSpec, task_state: TaskState, instruction: s
                 continue
 
             validation = validate_tool_call(tool_name, tool_args)
+            needs_confirmation = validation.allowed and (
+                validation.requires_approval or (supervision and tool_name in DESTRUCTIVE_TOOLS)
+            )
             if not validation.allowed:
                 result = f"[Guardrail] Acción bloqueada: {validation.reason}"
+            elif needs_confirmation and ask_permission is not None and not ask_permission(tool_name, tool_args):
+                result = "Acción cancelada por el usuario."
             else:
                 func = spec.tool_functions.get(tool_name)
                 if func is None:
                     result = f"Error: tool '{tool_name}' no disponible para el subagente {spec.name}."
                 else:
                     try:
-                        result = func(**tool_args)
+                        result = func(**filter_known_args(tool_name, tool_args))
                     except TypeError as e:
                         result = f"Error: argumentos inválidos para '{tool_name}': {e}"
                     except Exception as e:

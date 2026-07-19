@@ -14,9 +14,19 @@ así que estos helpers se pueden usar siempre sin chequear manualmente si
 está habilitado.
 """
 
-from langfuse import get_client, observe
+import os
+
+from langfuse import Langfuse, get_client, observe
 
 observe_agent = observe
+
+if os.environ.get("LANGFUSE_PUBLIC_KEY"):
+    # Inicializa el cliente explícitamente con un timeout acotado. Si no se
+    # hace esto, get_client() lo crea solo con la config por default (sin
+    # límite de tiempo propio, independiente del timeout del cliente de
+    # OpenAI), y un problema de red al exportar spans puede colgar el
+    # proceso sin que el timeout de agent/llm.py lo cubra.
+    Langfuse(timeout=30)
 
 
 def log_tool_call(subagent_name: str, tool_name: str, tool_args: dict, result: str) -> None:

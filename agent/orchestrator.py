@@ -19,10 +19,9 @@ from .paths import MEMORY_STORE_DIR
 from .state import TaskState
 from .subagents import explorer, implementer, researcher, reviewer, tester
 from .subagents.base import run_subagent
-from .tools.registry import build_toolset
+from .tools.registry import DESTRUCTIVE_TOOLS, build_toolset, filter_known_args
 
 BASE_TOOL_NAMES = ["read_file", "run_command", "list_files", "web_search"]
-DESTRUCTIVE_TOOLS = {"run_command"}
 
 SUBAGENT_SPECS = {
     "explorer": explorer.SPEC,
@@ -64,12 +63,29 @@ Guías de comportamiento:
 directamente. CUALQUIER cambio de código (crear/editar archivos .ts, DTOs, módulos, etc.) tiene \
 que pasar SIEMPRE por delegate_to_implementer. No existe otra forma de escribir código en este \
 sistema.
-- Para agregar funcionalidad nueva, seguí SIEMPRE este flujo completo, en orden: \
-(1) delegate_to_explorer para entender el repo y sus convenciones (salvo que la memoria del \
-proyecto ya te dé esa información con suficiente detalle), (2) delegate_to_researcher para \
-buscar en el RAG de NestJS cómo implementar lo pedido, (3) delegate_to_implementer para escribir \
-el código, (4) delegate_to_tester para correr build/tests, (5) delegate_to_reviewer para \
-validar el resultado final. No te saltees pasos de este flujo para tareas de código nuevo.
+- REGLA GENERAL: delegar tiene un costo real (iteraciones, tiempo, tokens). Usá SOLO los \
+subagentes cuyo trabajo es relevante para el pedido puntual — nunca delegues en uno "por las \
+dudas" o "porque siempre se hace". Guiate por el tipo de pedido:
+  · Pregunta o exploración simple ("qué hace este módulo", "explicame la arquitectura", "dónde \
+    está X"): NO delegues en nada. Usá tus propias tools (read_file, list_files) o, si necesitás \
+    una exploración más a fondo del repo, delegate_to_explorer sola (nada más).
+  · Investigar algo de NestJS sin tocar código ("cómo se hace X en NestJS", "qué opciones hay \
+    para Y"): delegate_to_researcher sola.
+  · Documentación (.md, comentarios, README) SIN tocar código fuente (.ts) ni configuración: \
+    delegate_to_explorer (solo si hace falta contexto) + delegate_to_implementer. NO uses tester \
+    (build/lint/test no verifican nada de un cambio de documentación) ni researcher salvo que el \
+    contenido en sí requiera investigar algo.
+  · Cambio chico y acotado sobre código ya conocido (ej. agregar un campo a un DTO existente, un \
+    ajuste puntual): delegate_to_implementer directo (saltea explorer si la memoria o el propio \
+    pedido ya te dan el contexto necesario) + delegate_to_tester para confirmar que no rompiste \
+    nada. Reviewer es opcional para cambios triviales.
+  · Feature nueva de código (módulo, endpoint, lógica nueva): acá sí conviene el flujo completo \
+    en orden — delegate_to_explorer (si hace falta) → delegate_to_researcher → \
+    delegate_to_implementer → delegate_to_tester → delegate_to_reviewer.
+  · Solo verificar el estado actual ("¿pasan los tests?", "¿compila?"): delegate_to_tester sola.
+- CUALQUIER cambio de código (crear/editar archivos .ts, DTOs, módulos, etc.) tiene que pasar \
+SIEMPRE por delegate_to_implementer — vos NO tenés la tool write_file y no existe otra forma de \
+escribir código en este sistema.
 - Tus propias tools (read_file, run_command, list_files, web_search) son solo para lecturas \
 rápidas o preguntas puntuales del usuario que NO impliquen escribir código.
 - CRÍTICO: cada vez que uses delegate_to_<subagente>, el campo instruction tiene que incluir el \
@@ -138,9 +154,7 @@ class Orchestrator:
         self.loop_detector.reset()
 
     def _print_subagent_tool_call(self, subagent_name: str, tool_name: str, tool_args: dict, result: str) -> None:
-        preview = result[:250] + ("..." if len(result) > 250 else "")
-        print(f"       [{subagent_name}:{tool_name}] args={json.dumps(tool_args, ensure_ascii=False)[:150]}")
-        print(f"          -> {preview}")
+        print(f"       [{subagent_name}] {tool_name}")
 
     def ask_permission(self, tool_name: str, tool_args: dict) -> bool:
         print(f"\n[SUPERVISIÓN] El agente quiere ejecutar: {tool_name}")
@@ -148,7 +162,11 @@ class Orchestrator:
         if len(preview) > 400:
             preview = preview[:400] + "\n... (truncado)"
         print(f"   Argumentos:\n{preview}")
-        answer = input("   ¿Permitir? [s/n] (Enter = sí): ").strip().lower()
+        try:
+            answer = input("   ¿Permitir? [s/n] (Enter = sí): ").strip().lower()
+        except (EOFError, KeyboardInterrupt):
+            print("   (sin respuesta, se deniega por defecto)")
+            return False
         return answer in ("s", "si", "sí", "y", "yes", "")
 
     def _execute_base_tool(self, tool_name: str, tool_args: dict) -> str:
@@ -166,7 +184,7 @@ class Orchestrator:
         if func is None:
             return f"Error: tool '{tool_name}' no reconocida."
         try:
-            result = func(**tool_args)
+            result = func(**filter_known_args(tool_name, tool_args))
         except TypeError as e:
             return f"Error: argumentos inválidos para '{tool_name}': {e}"
         except Exception as e:
@@ -246,22 +264,27 @@ class Orchestrator:
                         result_text = f"Error: subagente '{subagent_name}' no existe."
                     else:
                         instruction = tool_args.get("instruction", "")
-                        print(f"\n  -> Delegando en {subagent_name}: {instruction[:120]}")
-                        result = run_subagent(spec, self.task_state, instruction, on_tool_call=self._print_subagent_tool_call)
+                        print(f"\n  -> Delegando en {subagent_name}")
+                        result = run_subagent(
+                            spec,
+                            self.task_state,
+                            instruction,
+                            on_tool_call=self._print_subagent_tool_call,
+                            supervision=self.supervision,
+                            ask_permission=self.ask_permission,
+                        )
                         self.task_state.log_progress(
                             f"{subagent_name}: {result['status']} - {result['summary'][:200]}"
                         )
-                        print(f"     status={result['status']} | {result['summary'][:200]}")
+                        print(f"     status={result['status']} | {result['summary'][:120]}")
                         if result.get("sources"):
-                            for src in result["sources"]:
-                                print(f"     fuente [{src.get('kind')}]: {src.get('ref')}")
+                            fuentes = ", ".join(f"[{s.get('kind')}] {s.get('ref')}" for s in result["sources"])
+                            print(f"     fuentes: {fuentes[:150]}")
                         result_text = json.dumps(result, ensure_ascii=False)
                 else:
-                    print(f"\n  [{tool_name}] args: {json.dumps(tool_args, ensure_ascii=False)[:200]}")
+                    print(f"\n  [orchestrator] {tool_name}")
                     result_text = self._execute_base_tool(tool_name, tool_args)
                     log_tool_call("orchestrator", tool_name, tool_args, result_text)
-                    preview = result_text[:300] + ("..." if len(result_text) > 300 else "")
-                    print(f"     -> {preview}")
 
                 self.iteration_count += 1
                 if self.loop_detector.record(tool_name, tool_args, result_text):
