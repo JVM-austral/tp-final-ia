@@ -20,12 +20,31 @@ def read_file(path: str) -> str:
 
 
 def write_file(path: str, content: str) -> str:
-    """Escribe contenido en un archivo, reemplazando su contenido actual."""
+    """Escribe contenido en un archivo, reemplazando su contenido actual.
+
+    Si el archivo ya existía, guarda su contenido previo en '<path>.bak'
+    antes de sobreescribirlo (write_file reemplaza el archivo entero, no
+    aplica un diff, así que un rewrite parcial del modelo puede perder
+    contenido sin querer; el .bak permite recuperarlo). Si el contenido
+    nuevo es mucho más corto que el anterior, lo avisa explícitamente para
+    que el modelo pueda notar el problema y corregirlo.
+    """
     try:
-        Path(path).parent.mkdir(parents=True, exist_ok=True)
-        with open(path, "w", encoding="utf-8") as f:
-            f.write(content)
-        return f"Archivo escrito exitosamente: {path}"
+        target = Path(path)
+        warning = ""
+        if target.exists() and target.is_file():
+            previous = target.read_text(encoding="utf-8", errors="replace")
+            Path(str(target) + ".bak").write_text(previous, encoding="utf-8")
+            if previous and len(content) < len(previous) * 0.5:
+                warning = (
+                    f" ADVERTENCIA: el contenido nuevo ({len(content)} caracteres) es mucho más "
+                    f"corto que el anterior ({len(previous)} caracteres). Si no era intencional "
+                    f"borrar esa parte del archivo, restaurá el contenido previo desde "
+                    f"'{path}.bak' y reescribí de nuevo preservando todo lo que no querías cambiar."
+                )
+        target.parent.mkdir(parents=True, exist_ok=True)
+        target.write_text(content, encoding="utf-8")
+        return f"Archivo escrito exitosamente: {path}.{warning}"
     except Exception as e:
         return f"Error escribiendo '{path}': {e}"
 

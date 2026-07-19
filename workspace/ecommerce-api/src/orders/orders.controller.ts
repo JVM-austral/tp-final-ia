@@ -48,6 +48,11 @@ export class OrdersController {
     return this.ordersService.update(id, updateOrderDto);
   }
 
+  @Patch(':id/ship')
+  ship(@Param('id', ParseIntPipe) id: number) {
+    return this.ordersService.ship(id);
+  }
+
   @Delete(':id')
   remove(@Param('id', ParseIntPipe) id: number) {
     return this.ordersService.remove(id);

@@ -74,11 +74,14 @@ def summarize_messages(client, model: str, messages: list) -> str:
 
 def _find_safe_cut(rest: list, target_keep: int) -> int:
     """Busca un índice cercano a `target_keep` (desde el final) que sea
-    seguro para cortar el historial: justo antes de un mensaje 'user', para
-    no separar un tool_call de su respuesta."""
+    seguro para cortar el historial: justo antes de un mensaje 'user' o de
+    un 'assistant' que arranca una tanda nueva de tool_calls, para no
+    separar un tool_call de su respuesta 'tool'. Los subagentes (que no
+    tienen más de un mensaje 'user') dependen de este segundo caso para
+    poder compactarse."""
     ideal = max(len(rest) - target_keep, 0)
     for i in range(ideal, len(rest)):
-        if rest[i].get("role") == "user":
+        if rest[i].get("role") in ("user", "assistant"):
             return i
     return len(rest)
 
