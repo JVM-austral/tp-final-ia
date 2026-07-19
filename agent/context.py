@@ -1,9 +1,3 @@
-"""Manejo de contexto: resume historial largo y detecta loops (repetición
-de acciones sin avance), para forzar replanificación o frenar y pedir ayuda
-en vez de seguir iterando sin sentido, tal como pide la consigna del TP
-final.
-"""
-
 import hashlib
 import json
 

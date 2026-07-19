@@ -1,11 +1,7 @@
-"""Tool de shell: run_command. Portada de jtvc.py con timeout más alto para
-soportar comandos de npm (install/build/test) que tardan más que 60s."""
-
 import subprocess
 
 
 def run_command(command: str, timeout: int = 180) -> str:
-    """Ejecuta un comando de terminal y devuelve stdout + stderr."""
     try:
         result = subprocess.run(
             command,

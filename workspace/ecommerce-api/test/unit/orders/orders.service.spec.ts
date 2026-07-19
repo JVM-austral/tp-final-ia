@@ -1,6 +1,6 @@
-import { OrdersService } from './orders.service';
+import { OrdersService } from '../../../src/orders/orders.service';
 import { BadRequestException, NotFoundException } from '@nestjs/common';
-import { OrderStatus } from './entities/order.entity';
+import { OrderStatus } from '../../../src/orders/entities/order.entity';
 
 describe('OrdersService', () => {
   let service: OrdersService;
@@ -32,8 +32,9 @@ describe('OrdersService', () => {
       // If no error thrown, fail the test
       fail('Expected BadRequestException');
     } catch (e) {
-      expect(e).toBeInstanceOf(BadRequestException);
-      expect(e.message).toBe(`Order #${order.id} is already shipped`);
+      const err = e as Error;
+      expect(err).toBeInstanceOf(BadRequestException);
+      expect(err.message).toBe(`Order #${order.id} is already shipped`);
     }
   });
 
@@ -42,8 +43,9 @@ describe('OrdersService', () => {
       service.ship(999);
       fail('Expected NotFoundException');
     } catch (e) {
-      expect(e).toBeInstanceOf(NotFoundException);
-      expect(e.message).toBe('Order #999 not found');
+      const err = e as Error;
+      expect(err).toBeInstanceOf(NotFoundException);
+      expect(err.message).toBe('Order #999 not found');
     }
   });
 });

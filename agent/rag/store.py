@@ -1,5 +1,3 @@
-"""Cliente Chroma persistente local para el índice RAG de docs de NestJS."""
-
 import chromadb
 
 from ..paths import RAG_CHROMA_DIR
@@ -20,9 +18,7 @@ def get_collection(persist_dir: str = str(RAG_CHROMA_DIR), name: str = "nestjs_d
 
 
 def query(client_openai, query_text: str, k: int = 4, persist_dir: str = str(RAG_CHROMA_DIR)) -> list:
-    """Busca los k chunks más relevantes para query_text. Devuelve una lista
-    de {text, source, heading, score} ordenados por relevancia (score =
-    similaridad coseno aproximada, 1.0 = idéntico)."""
+
     from .ingest import embed_texts
 
     collection = get_collection(persist_dir)

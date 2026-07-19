@@ -1,9 +1,3 @@
-"""Registro central de tools: función + schema JSON (formato OpenAI
-tool-calling) para cada tool disponible. Cada subagente arma su propio
-subset con build_toolset() según qué permisos necesita — no todos tienen
-acceso a las mismas tools, como pide la consigna del TP final.
-"""
-
 from .fs_tools import list_files, read_file, write_file
 from .rag_tools import rag_search
 from .shell_tools import run_command
@@ -18,8 +12,6 @@ ALL_TOOL_FUNCTIONS = {
     "rag_search": rag_search,
 }
 
-# Tools que modifican el sistema: en modo supervisión piden confirmación antes
-# de ejecutarse, sea quien sea que las invoque (agente principal o subagente).
 DESTRUCTIVE_TOOLS = {"write_file", "run_command"}
 
 ALL_TOOLS_SCHEMA = {
@@ -116,18 +108,12 @@ ALL_TOOLS_SCHEMA = {
 
 
 def build_toolset(names: list):
-    """Arma (tools_schema, tool_functions) para un subset de nombres de tools."""
     schema = [ALL_TOOLS_SCHEMA[n] for n in names]
     functions = {n: ALL_TOOL_FUNCTIONS[n] for n in names}
     return schema, functions
 
 
 def filter_known_args(tool_name: str, tool_args: dict) -> dict:
-    """Descarta argumentos que el modelo haya alucinado y no existan en el
-    schema de la tool (ej. pasar 'k' a web_search, que solo lo tiene
-    rag_search). El schema de tool-calling no impide que el modelo invente
-    parámetros extra, así que sin este filtro esas llamadas fallan con
-    TypeError en vez de ejecutarse con los argumentos válidos que sí tiene."""
     schema = ALL_TOOLS_SCHEMA.get(tool_name)
     if schema is None:
         return tool_args

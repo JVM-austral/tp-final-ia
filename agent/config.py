@@ -1,14 +1,3 @@
-"""Guardrails: carga agent.config.yaml y valida cada tool call antes de
-ejecutarla.
-
-Adaptado del guardrails.py comentado en jtvc.py (sandbox + patrones
-bloqueados + comandos prohibidos), pero con el esquema de políticas del TP
-final: permissions.read/write.deny (globs) y commands.deny/require_approval,
-tal como lo pide la consigna. Las validaciones aplican tanto al agente
-principal como a cada subagente, sin importar el modo supervisión: los
-comandos en require_approval siempre piden confirmación.
-"""
-
 import fnmatch
 import re
 from dataclasses import dataclass, field
@@ -135,11 +124,6 @@ def _check_command(command: str) -> ValidationResult:
 
 
 def validate_tool_call(tool_name: str, tool_args: dict) -> ValidationResult:
-    """Valida un tool call contra la configuración cargada.
-
-    Debe llamarse antes de ejecutar CUALQUIER tool, tanto del agente
-    principal como de los subagentes.
-    """
     if _config is None:
         return ValidationResult(True)
 

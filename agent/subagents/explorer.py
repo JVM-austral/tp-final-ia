@@ -1,7 +1,3 @@
-"""Explorer: entiende el repositorio — estructura, arquitectura,
-dependencias, convenciones y archivos relevantes. Solo lectura: no tiene
-acceso a write_file."""
-
 from ..tools.registry import build_toolset
 from .base import SubagentSpec
 

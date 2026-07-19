@@ -1,9 +1,3 @@
-"""Entry point del coding agent. Chat interactivo con el orquestador
-multiagente: modo plan, modo supervisión, memoria persistente por
-proyecto, RAG, guardrails y observabilidad, sobre el proyecto NestJS
-configurado en agent.config.yaml.
-"""
-
 import os
 import sys
 
@@ -11,11 +5,7 @@ if sys.stdout.encoding is None or sys.stdout.encoding.lower() != "utf-8":
     sys.stdout.reconfigure(encoding="utf-8")
     sys.stderr.reconfigure(encoding="utf-8")
 
-# Cuando stdout no es una terminal (ej. redirigido a un archivo, o piped),
-# Python lo bufferea por bloque en vez de por línea: los prints quedan
-# retenidos y no aparecen hasta que el buffer se llena o el proceso
-# termina. Forzamos line buffering para que el progreso sea visible en
-# tiempo real siempre, no solo en una terminal interactiva.
+
 sys.stdout.reconfigure(line_buffering=True)
 
 from dotenv import load_dotenv
@@ -23,6 +13,7 @@ from dotenv import load_dotenv
 load_dotenv()
 
 from agent.config import load_config
+from agent.observability import flush as flush_observability
 from agent.orchestrator import Orchestrator
 
 CONFIG_PATH = "agent.config.yaml"
@@ -74,6 +65,7 @@ def run_chat() -> None:
             user_input = input("\nVos: ").strip()
         except (KeyboardInterrupt, EOFError):
             print("\n\nHasta luego!")
+            flush_observability()
             break
 
         if not user_input:
@@ -85,6 +77,7 @@ def run_chat() -> None:
 
             if cmd in ("/exit", "/quit", "/salir"):
                 print("Hasta luego!")
+                flush_observability()
                 break
             elif cmd == "/help":
                 print_help()
@@ -131,6 +124,8 @@ def run_chat() -> None:
             if orch.messages and orch.messages[-1]["role"] == "user":
                 orch.messages.pop()
             raise
+        finally:
+            flush_observability()
 
 
 if __name__ == "__main__":

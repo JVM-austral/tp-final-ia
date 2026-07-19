@@ -1,10 +1,3 @@
-"""Tools de filesystem: read_file, write_file, list_files.
-
-Portadas del TP de la cursada (jtvc.py), sin los prints de progreso: el
-harness ya loguea cada tool call (nombre, args, preview del resultado), así
-que estas funciones se mantienen puras (reciben args, devuelven un string).
-"""
-
 from pathlib import Path
 
 

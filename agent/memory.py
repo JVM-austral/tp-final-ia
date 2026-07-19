@@ -1,12 +1,3 @@
-"""Memoria persistente por proyecto: sobrevive entre sesiones, más allá del
-historial de una conversación puntual. Se guarda en
-memory_store/<slug>/memory.json.
-
-Guarda arquitectura detectada, archivos importantes, dependencias, comandos
-útiles, convenciones, decisiones tomadas, bugs investigados y resúmenes de
-sesiones previas, según pide la consigna del TP final.
-"""
-
 import json
 import re
 from datetime import datetime, timezone

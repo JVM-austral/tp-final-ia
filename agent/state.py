@@ -1,11 +1,3 @@
-"""Estado compartido de una tarea entre el agente principal y los subagentes.
-
-Registra el pedido original, el avance, los resultados de cada subagente,
-las fuentes consultadas (repo/memoria/rag/web/inferencia), los archivos
-modificados y observaciones relevantes, tal como pide la consigna del TP
-final. Se persiste a JSON para quedar como evidencia de cada corrida.
-"""
-
 import json
 from dataclasses import asdict, dataclass, field
 from datetime import datetime, timezone

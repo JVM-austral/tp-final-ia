@@ -1,12 +1,3 @@
-"""Agente principal (orquestador).
-
-Mantiene el TaskState compartido, decide si resuelve algo directamente con
-sus tools base o delega en un subagente especializado (Explorer/Researcher/
-Implementer/Tester/Reviewer), valida cada tool call contra los guardrails,
-aplica plan mode y supervisión, detecta loops, resume historial largo y
-persiste memoria del proyecto al terminar cada tarea.
-"""
-
 import json
 from typing import Optional
 
@@ -79,9 +70,14 @@ dudas" o "porque siempre se hace". Guiate por el tipo de pedido:
     ajuste puntual): delegate_to_implementer directo (saltea explorer si la memoria o el propio \
     pedido ya te dan el contexto necesario) + delegate_to_tester para confirmar que no rompiste \
     nada. Reviewer es opcional para cambios triviales.
-  · Feature nueva de código (módulo, endpoint, lógica nueva): acá sí conviene el flujo completo \
-    en orden — delegate_to_explorer (si hace falta) → delegate_to_researcher → \
-    delegate_to_implementer → delegate_to_tester → delegate_to_reviewer.
+  · Feature nueva de código (módulo, endpoint, lógica nueva): acá el flujo completo en orden es \
+    OBLIGATORIO, no opcional — delegate_to_explorer (si hace falta) → delegate_to_researcher → \
+    delegate_to_implementer → delegate_to_tester → delegate_to_reviewer. NUNCA saltees \
+    delegate_to_researcher aunque el Explorer ya te haya dado contexto del repo: Researcher \
+    respalda con fuentes (RAG o web) las APIs/patrones que el Implementer va a usar, algo que \
+    Explorer no hace. NUNCA saltees delegate_to_reviewer al final: es el gate que valida el \
+    resultado contra el pedido original antes de darlo por terminado. Solo podés saltear un paso \
+    de este flujo si el usuario te lo pide explícitamente en el turno actual.
   · Solo verificar el estado actual ("¿pasan los tests?", "¿compila?"): delegate_to_tester sola.
 - CUALQUIER cambio de código (crear/editar archivos .ts, DTOs, módulos, etc.) tiene que pasar \
 SIEMPRE por delegate_to_implementer — vos NO tenés la tool write_file y no existe otra forma de \

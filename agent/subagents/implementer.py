@@ -1,7 +1,3 @@
-"""Implementer: propone o realiza cambios de código a partir de los
-hallazgos disponibles (Explorer + Researcher). Es el único subagente con
-permiso de escritura."""
-
 from ..tools.registry import build_toolset
 from .base import SubagentSpec
 

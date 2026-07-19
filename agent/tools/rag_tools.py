@@ -1,10 +1,3 @@
-"""Tool de RAG: rag_search. Consulta el índice vectorial de documentación
-oficial de NestJS y devuelve los chunks más relevantes junto con su fuente,
-para que el agente pueda citarlas y diferenciar información obtenida del
-RAG de la del repo, memoria, web o inferencia propia (como pide la
-consigna). Si la relevancia es baja, sugiere usar web_search como fallback.
-"""
-
 MIN_RELEVANCE_SCORE = 0.25
 
 

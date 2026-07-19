@@ -1,14 +1,3 @@
-"""Ingesta del corpus RAG: chunking por headers de markdown + ventana de
-tokens, embeddings con OpenAI (text-embedding-3-small) y carga en ChromaDB
-persistente local.
-
-Estrategia de chunking: primero se parte cada doc por sus headers de
-markdown (## a ####), preservando la ruta de títulos como contexto; cada
-sección se subdivide en ventanas de ~500 tokens con 50 de solapamiento
-(tiktoken, encoding cl100k_base) para no cortar ideas a mitad de camino ni
-mandar secciones enteras gigantes al embedding.
-"""
-
 import re
 from pathlib import Path
 
@@ -97,8 +86,7 @@ def ingest_directory(
     docs_dir: str = str(RAG_DOCS_DIR),
     persist_dir: str = str(RAG_CHROMA_DIR),
 ) -> int:
-    """Lee todos los .md de docs_dir, los chunkea, embeddea y carga en
-    Chroma. Devuelve la cantidad de chunks indexados."""
+
     collection = get_collection(persist_dir)
 
     existing_ids = collection.get()["ids"]

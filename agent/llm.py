@@ -1,11 +1,3 @@
-"""Cliente LLM compartido, envuelto con Langfuse para observabilidad.
-
-`langfuse.openai.OpenAI` es un reemplazo directo (drop-in) del cliente de
-OpenAI: intercepta cada `chat.completions.create` / `embeddings.create` y
-registra prompt, modelo, tokens, latencia y costo estimado sin tener que
-instrumentar cada call site a mano.
-"""
-
 import os
 
 from langfuse.openai import OpenAI

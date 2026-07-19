@@ -1,6 +1,3 @@
-"""Tester: valida el resultado mediante checks concretos (tests, build,
-lint). Solo ejecuta comandos y lee archivos; no escribe código."""
-
 from ..tools.registry import build_toolset
 from .base import SubagentSpec
 

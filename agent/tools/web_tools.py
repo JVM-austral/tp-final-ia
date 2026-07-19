@@ -1,12 +1,8 @@
-"""Tool de búsqueda web: web_search vía Tavily. Portada de jtvc.py, leyendo
-la API key de variables de entorno (.env) en vez de google.colab.userdata."""
-
 import os
 import requests
 
 
 def web_search(query: str) -> str:
-    """Busca información en la web usando la API de Tavily."""
     tavily_key = os.environ.get("TAVILY_API_KEY", "")
 
     if not tavily_key:

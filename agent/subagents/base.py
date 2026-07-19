@@ -1,14 +1,3 @@
-"""Runner genérico de subagentes.
-
-Cada subagente (Explorer, Researcher, Implementer, Tester, Reviewer) tiene
-su propio system prompt y un set acotado de tools. `run_subagent` lo corre
-como un loop de tool-calling independiente del orquestador principal
-(mismo patrón que el harness de la cursada, pero con su propio historial
-de mensajes) y, al terminar, guarda un resultado estructurado en el
-TaskState compartido en vez de volcarle al agente principal todo el
-detalle de cada paso intermedio.
-"""
-
 import json
 from dataclasses import dataclass
 
@@ -83,14 +72,7 @@ def run_subagent(
     supervision: bool = False,
     ask_permission=None,
 ) -> dict:
-    """Corre el loop de tool-calling de un subagente y devuelve su
-    resultado estructurado (también queda registrado en task_state).
 
-    `supervision` y `ask_permission` vienen del agente principal: en modo
-    supervisión, cualquier tool destructiva (write_file, run_command) que
-    ejecute ESTE subagente también pide confirmación, no solo las que
-    ejecuta el agente principal directamente.
-    """
     return observe_agent(name=f"subagent:{spec.name}", as_type="agent")(_run_subagent_impl)(
         spec, task_state, instruction, on_tool_call, supervision, ask_permission
     )

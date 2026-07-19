@@ -1,6 +1,3 @@
-"""Researcher: busca información en el RAG y, cuando sea necesario, en la
-web. Prioriza siempre RAG sobre web, y web sobre inferencia propia."""
-
 from ..tools.registry import build_toolset
 from .base import SubagentSpec
 

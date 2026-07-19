@@ -1,6 +1,3 @@
-"""Reviewer: revisa el diff o los cambios realizados y valida que
-respondan al pedido original del usuario."""
-
 from ..tools.registry import build_toolset
 from .base import SubagentSpec
 
